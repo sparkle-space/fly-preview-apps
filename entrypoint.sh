@@ -72,6 +72,11 @@ if [ -e "rel/overlays/bin/migrate" ]; then
     else
       if flyctl status --app "$app_db"; then
         echo "$app_db DB already exists"
+        if [ fly postgres users list --app sparklespace-pr-66-db | grep sparklespace ]
+        then
+          echo "Detaching DB from app"
+          flyctl postgres detach "$app_db" --app "$app"
+        fi
       else
         flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-1x --initial-cluster-size 1 --volume-size 1
       fi
