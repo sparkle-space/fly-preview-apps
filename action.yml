@@ -38,3 +38,6 @@ inputs:
   ha:
     description: Create spare machines that increases app availability (default false)
     default: false
+  dbvmtype:
+    description: VM type for DB, if created
+    default: shared-cpu-1x

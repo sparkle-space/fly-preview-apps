@@ -22,11 +22,11 @@ app="${INPUT_NAME:-pr-$PR_NUMBER-$GITHUB_REPOSITORY_OWNER-$GITHUB_REPOSITORY_NAM
 app="${app//_/-}"
 app_db="${app}-db"
 app_db="${INPUT_POSTGRES:-${app_db}}"
-app_db_user="${app_db}-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT"
 region="${INPUT_REGION:-${FLY_REGION:-iad}}"
 org="${INPUT_ORG:-${FLY_ORG:-personal}}"
 image="$INPUT_IMAGE"
 config="${INPUT_CONFIG:-fly.toml}"
+db_vm_type="${INPUT_DBVMTYPE:-shared-cpu-1x}"
 
 if ! echo "$app" | grep "$PR_NUMBER"; then
   echo "For safety, this action requires the app's name to contain the PR number."
@@ -73,16 +73,15 @@ if [ -e "rel/overlays/bin/migrate" ]; then
     else
       if flyctl status --app "$app_db"; then
         echo "$app_db DB already exists"
-        flyctl secrets unset --app "$app" DATABASE_URL
       else
-        flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-2x --initial-cluster-size 1 --volume-size 1
-      fi
+        flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size "$db_vm_type" --initial-cluster-size 1 --volume-size 1
 
-      # attaching db to the app if it was created successfully, or already existing
-      if flyctl postgres attach "$app_db" --app "$app" --database-user "$app_db_user" -y; then
-        echo "$app_db DB attached to $app"
-      else
-        echo "Error attaching $app_db to $app, attachments exist"
+        # attaching db to the app if it was created successfully
+        if flyctl postgres attach "$app_db" --app "$app" -y; then
+          echo "$app_db DB attached to $app"
+        else
+          echo "Error attaching $app_db to $app, attachments exist"
+        fi
       fi
     fi
   fi
