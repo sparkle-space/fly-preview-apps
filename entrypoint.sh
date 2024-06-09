@@ -76,7 +76,7 @@ if [ -e "rel/overlays/bin/migrate" ]; then
         flyctl secrets unset --app "$app_db" DATABASE_URL
         sleep 10
       else
-        flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-1x --initial-cluster-size 1 --volume-size 1
+        flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-2x --initial-cluster-size 1 --volume-size 1
       fi
 
       # attaching db to the app if it was created successfully, or already existing
