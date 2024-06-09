@@ -22,6 +22,7 @@ app="${INPUT_NAME:-pr-$PR_NUMBER-$GITHUB_REPOSITORY_OWNER-$GITHUB_REPOSITORY_NAM
 app="${app//_/-}"
 app_db="${app}-db"
 app_db="${INPUT_POSTGRES:-${app_db}}"
+app_db_user="${app_db}-$GITHUB_RUN_NUMBER"
 region="${INPUT_REGION:-${FLY_REGION:-iad}}"
 org="${INPUT_ORG:-${FLY_ORG:-personal}}"
 image="$INPUT_IMAGE"
@@ -72,17 +73,13 @@ if [ -e "rel/overlays/bin/migrate" ]; then
     else
       if flyctl status --app "$app_db"; then
         echo "$app_db DB already exists"
-        if [ fly postgres users list --app sparklespace-pr-66-db | grep sparklespace ]
-        then
-          echo "Detaching DB from app"
-          flyctl postgres detach "$app_db" --app "$app"
-        fi
+        flyctl secrets unset --app "$app_db" DATABASE_URL
       else
         flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-1x --initial-cluster-size 1 --volume-size 1
       fi
 
       # attaching db to the app if it was created successfully, or already existing
-      if flyctl postgres attach "$app_db" --app "$app" -y; then
+      if flyctl postgres attach "$app_db" --app "$app" --database-user "$app_db_user" -y; then
         echo "$app_db DB attached to $app"
       else
         echo "Error attaching $app_db to $app, attachments exist"
