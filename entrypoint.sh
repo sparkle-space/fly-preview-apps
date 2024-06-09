@@ -35,11 +35,6 @@ fi
 
 # PR was closed - remove the Fly app if one exists and exit.
 if [ "$EVENT_TYPE" = "closed" ]; then
-  # destroy app DB
-  if flyctl status --app "$app_db"; then
-    flyctl apps destroy "$app_db" -y || true
-  fi
-
   # destroy associated volumes as well
   # @TODO: refactor code below to avoid repeatedly running `flyctl volumes list ...`
   # we could declare the variable in line 49 outside the if block, then reuse it inside the block,
@@ -49,9 +44,14 @@ if [ "$EVENT_TYPE" = "closed" ]; then
     flyctl volumes destroy "$volume_id" -y || true
   fi
 
-  # finally, destroy the app
+  # destroy the app
   if flyctl status --app "$app"; then
     flyctl apps destroy "$app" -y || true
+  fi
+
+  # destroy app DB last to avoid errors
+  if flyctl status --app "$app_db"; then
+    flyctl apps destroy "$app_db" -y || true
   fi
   exit 0
 fi
