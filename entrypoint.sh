@@ -73,7 +73,7 @@ if [ -e "rel/overlays/bin/migrate" ]; then
     else
       if flyctl status --app "$app_db"; then
         echo "$app_db DB already exists"
-        flyctl secrets unset --detach --app "$app_db" DATABASE_URL
+        flyctl secrets unset --app "$app_db" DATABASE_URL
       else
         flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-1x --initial-cluster-size 1 --volume-size 1
       fi
