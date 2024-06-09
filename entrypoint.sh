@@ -74,13 +74,13 @@ if [ -e "rel/overlays/bin/migrate" ]; then
         echo "$app_db DB already exists"
       else
         flyctl postgres create --name "$app_db" --org "$org" --region "$region" --vm-size shared-cpu-1x --initial-cluster-size 1 --volume-size 1
+      fi
 
-        # attaching db to the app if it was created successfully
-        if flyctl postgres attach "$app_db" --app "$app" -y; then
-          echo "$app_db DB attached to $app"
-        else
-          echo "Error attaching $app_db to $app, attachments exist"
-        fi
+      # attaching db to the app if it was created successfully, or already existing
+      if flyctl postgres attach "$app_db" --app "$app" -y; then
+        echo "$app_db DB attached to $app"
+      else
+        echo "Error attaching $app_db to $app, attachments exist"
       fi
     fi
   fi
