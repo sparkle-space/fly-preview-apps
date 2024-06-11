@@ -27,10 +27,17 @@ org="${INPUT_ORG:-${FLY_ORG:-personal}}"
 image="$INPUT_IMAGE"
 config="${INPUT_CONFIG:-fly.toml}"
 db_vm_type="${INPUT_DBVMTYPE:-shared-cpu-1x}"
+build_secrets=""
 
 if ! echo "$app" | grep "$PR_NUMBER"; then
   echo "For safety, this action requires the app's name to contain the PR number."
   exit 1
+fi
+
+if [ -n "$INPUT_BUILD_SECRETS" ]; then
+  for ARG in $(echo "$INPUT_BUILD_SECRETS" | tr " " "\n"); do
+    build_secrets="$build_secrets --build-secret ${ARG}"
+  done
 fi
 
 # PR was closed - remove the Fly app if one exists and exit.
@@ -110,9 +117,9 @@ fi
 # Trigger the deploy of the new version.
 echo "Contents of config $config file: " && cat "$config"
 if [ -n "$INPUT_VM" ]; then
-  flyctl deploy --config "$config" --app "$app" --regions "$region" --image "$image" --remote-only --strategy immediate --ha=$INPUT_HA --vm-size "$INPUT_VMSIZE"
+  flyctl deploy --config "$config" --app "$app" --regions "$region" --image "$image" --remote-only --strategy immediate --ha=$INPUT_HA --vm-size "$INPUT_VMSIZE" ${build_secrets}
 else
-  flyctl deploy --config "$config" --app "$app" --regions "$region" --image "$image" --remote-only --strategy immediate --ha=$INPUT_HA --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus $INPUT_CPU --vm-memory "$INPUT_MEMORY"
+  flyctl deploy --config "$config" --app "$app" --regions "$region" --image "$image" --remote-only --strategy immediate --ha=$INPUT_HA --vm-cpu-kind "$INPUT_CPUKIND" --vm-cpus $INPUT_CPU --vm-memory "$INPUT_MEMORY" ${build_secrets}
 fi
 
 # Make some info available to the GitHub workflow.
